@@ -217,18 +217,26 @@ const { total, categoryTotals, chartData } = useMemo(() => {
   
   return (
     <div className="space-y-6 pb-24">
+      <Sheet>
+        <SheetTrigger asChild>
+            <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg shadow-primary/40 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white active:scale-95 transition-transform">
+                <Plus className="h-8 w-8" />
+            </Button>
+        </SheetTrigger>
+        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} />
+      </Sheet>
       
-      {/* Totals & Expense List */}
+      <Card className="bg-transparent border-none shadow-none">
+          <CardHeader>
+          <CardTitle className="text-lg font-medium text-muted-foreground">Total Balance</CardTitle>
+          <CardDescription className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
+              <AnimatedBalance value={total} />
+          </CardDescription>
+          </CardHeader>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-2 space-y-6">
-            <Card className="bg-transparent border-none shadow-none">
-                <CardHeader>
-                <CardTitle className="text-lg font-medium text-muted-foreground">Total Balance</CardTitle>
-                <CardDescription className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-                    <AnimatedBalance value={total} />
-                </CardDescription>
-                </CardHeader>
-            </Card>
              <Card className="bg-card/60 backdrop-blur-xl border-white/10">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Category Totals</CardTitle>
@@ -317,7 +325,6 @@ const { total, categoryTotals, chartData } = useMemo(() => {
         </div>
       </div>
       
-      {/* Analytics */}
       <Card className="bg-card/60 backdrop-blur-xl border-white/10">
         <CardHeader>
           <CardTitle>Spending Breakdown</CardTitle>
@@ -350,7 +357,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="stroke-none focus:outline-none" />
                           ))}
                       </Pie>
-                      <Tooltip content={<></>} />
+                      <Tooltip />
                   </PieChart>
               </ResponsiveContainer>
           ) : (
@@ -360,16 +367,6 @@ const { total, categoryTotals, chartData } = useMemo(() => {
           )}
         </CardContent>
       </Card>
-      
-      {/* FAB */}
-      <Sheet>
-        <SheetTrigger asChild>
-            <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg shadow-primary/40 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white active:scale-95 transition-transform">
-                <Plus className="h-8 w-8" />
-            </Button>
-        </SheetTrigger>
-        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} />
-      </Sheet>
     </div>
   );
 }
