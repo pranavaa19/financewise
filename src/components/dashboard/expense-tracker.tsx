@@ -38,15 +38,18 @@ const CategoryIcon = ({ category, className }: { category: string; className?: s
 const COLORS = ['#4F46E5', '#A78BFA', '#F59E0B', '#10B981', '#3B82F6', '#EC4899'];
 
 const ActiveShape = (props: any) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value } = props;
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value, percent } = props;
 
   return (
     <g>
-      <text x={cx} y={cy - 10} dy={8} textAnchor="middle" fill={fill} className="text-lg font-bold">
+      <text x={cx} y={cy - 20} dy={8} textAnchor="middle" fill={fill} className="text-lg font-bold">
         {payload.name}
       </text>
-      <text x={cy} y={cy + 10} dy={8} textAnchor="middle" fill="#9CA3AF" className="text-sm">
+       <text x={cx} y={cy} dy={8} textAnchor="middle" fill="#9CA3AF" className="text-sm">
         {formatIndianCurrency(value)}
+      </text>
+      <text x={cx} y={cy + 20} dy={8} textAnchor="middle" fill="#9CA3AF" className="text-xs">
+        ({(percent * 100).toFixed(2)}%)
       </text>
       <Sector
         cx={cx}
@@ -294,6 +297,9 @@ const { total, categoryTotals, chartData } = useMemo(() => {
   
   return (
     <>
+      <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} setOpen={setSheetOpen} />
+      </Sheet>
       <div className="space-y-6 pb-24">
         
         <Card className="bg-transparent border-none shadow-none">
@@ -442,14 +448,6 @@ const { total, categoryTotals, chartData } = useMemo(() => {
             </CardContent>
         </Card>
       </div>
-      <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-        <SheetTrigger asChild>
-            <Button className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg shadow-primary/40 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white active:scale-95 transition-transform z-50">
-                <Plus className="h-8 w-8" />
-            </Button>
-        </SheetTrigger>
-        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} setOpen={setSheetOpen} />
-      </Sheet>
     </>
   );
 }
