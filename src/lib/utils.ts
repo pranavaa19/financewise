@@ -7,8 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatIndianCurrency(amount: number) {
     const formatter = new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
+        style: 'decimal',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
