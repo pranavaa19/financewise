@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import type { ZodSchema } from 'zod';
 import * as z from 'zod';
 import { format, startOfMonth, startOfWeek, startOfDay, endOfDay, endOfWeek, endOfMonth } from 'date-fns';
-import { Timestamp, collection, onSnapshot, query, addDoc, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { Timestamp, collection, onSnapshot, query, addDoc, where, getDocs, doc, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
 import { addExpense, getExpenses, deleteExpense, addCategory } from '@/lib/firebase/firestore';
@@ -217,19 +217,18 @@ const { total, categoryTotals, chartData } = useMemo(() => {
   
   return (
     <div className="space-y-6 pb-24">
-      {/* Golden Header */}
-      <Card className="bg-transparent border-none shadow-none">
-        <CardHeader>
-          <CardTitle className="text-lg font-medium text-muted-foreground">Total Balance</CardTitle>
-          <CardDescription className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-            <AnimatedBalance value={total} />
-          </CardDescription>
-        </CardHeader>
-      </Card>
       
       {/* Totals & Expense List */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-2 space-y-6">
+            <Card className="bg-transparent border-none shadow-none">
+                <CardHeader>
+                <CardTitle className="text-lg font-medium text-muted-foreground">Total Balance</CardTitle>
+                <CardDescription className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
+                    <AnimatedBalance value={total} />
+                </CardDescription>
+                </CardHeader>
+            </Card>
              <Card className="bg-card/60 backdrop-blur-xl border-white/10">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Category Totals</CardTitle>
