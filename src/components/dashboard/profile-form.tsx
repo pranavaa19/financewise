@@ -81,7 +81,7 @@ export function ProfileForm() {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto bg-card/60 backdrop-blur-xl border-white/10">
       <CardHeader>
         <CardTitle>User Profile</CardTitle>
         <CardDescription>Manage your personal information.</CardDescription>
@@ -141,7 +141,7 @@ export function ProfileForm() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+              <Button type="submit" disabled={loading} className="w-full sm:w-auto active:scale-95 transition-transform">
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes
               </Button>
