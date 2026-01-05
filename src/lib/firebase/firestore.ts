@@ -32,6 +32,19 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   return null;
 }
 
+// --- Category Functions ---
+
+export async function addCategory(uid: string, categoryName: string): Promise<void> {
+    const categoriesCollectionRef = collection(db, 'users', uid, 'categories');
+    // Check if category already exists to avoid duplicates
+    const q = query(categoriesCollectionRef, where("name", "==", categoryName));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+        await addDoc(categoriesCollectionRef, { name: categoryName, createdAt: Timestamp.now() });
+    }
+}
+
+
 // --- Expense Functions ---
 
 type ExpenseData = {
@@ -54,10 +67,17 @@ export async function addExpense(uid: string, expense: Omit<ExpenseData, 'create
 }
 
 
-export async function getExpensesForMonth(uid: string, year: number, month: number): Promise<Expense[]> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
+export async function getExpenses(uid: string, filter: { year: number, month: number } | { start: Date, end: Date }): Promise<Expense[]> {
+  let startDate, endDate;
 
+  if ('month' in filter) {
+    startDate = new Date(filter.year, filter.month - 1, 1);
+    endDate = new Date(filter.year, filter.month, 0, 23, 59, 59);
+  } else {
+    startDate = filter.start;
+    endDate = filter.end;
+  }
+  
   const startTimestamp = Timestamp.fromDate(startDate);
   const endTimestamp = Timestamp.fromDate(endDate);
 
@@ -81,3 +101,5 @@ export async function deleteExpense(uid: string, expenseId: string): Promise<voi
   const expenseRef = doc(db, 'users', uid, 'expenses', expenseId);
   await deleteDoc(expenseRef);
 }
+
+    

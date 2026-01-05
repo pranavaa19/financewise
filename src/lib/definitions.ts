@@ -6,7 +6,7 @@ export type UserProfile = {
   phoneNumber: string;
 };
 
-export type ExpenseCategory = 'Food' | 'Travel' | 'Rent' | 'Other';
+export type ExpenseCategory = string;
 
 export const expenseCategories: ExpenseCategory[] = ['Food', 'Travel', 'Rent', 'Other'];
 
@@ -23,3 +23,5 @@ export type CategoryTotal = {
   category: ExpenseCategory;
   total: number;
 };
+
+    
