@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import type { ZodSchema } from 'zod';
 import * as z from 'zod';
 import { format, startOfMonth, startOfWeek, startOfDay, endOfDay, endOfWeek, endOfMonth } from 'date-fns';
-import { Timestamp, collection, onSnapshot, query, addDoc, where, getDocs, doc, deleteDoc, orderBy } from 'firebase/firestore';
+import { Timestamp, collection, onSnapshot, query, addDoc, where, getDocs, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
 import { addExpense, getExpenses, deleteExpense, addCategory } from '@/lib/firebase/firestore';
@@ -17,27 +16,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
-import { AddExpenseSheet } from '@/components/dashboard/add-expense-sheet';
+import { AddExpenseSheet, type OnAddExpensePayload } from '@/components/dashboard/add-expense-sheet';
 import { useToast } from '@/hooks/use-toast';
 import { cn, formatIndianCurrency } from '@/lib/utils';
 import { Loader2, Trash2, Salad, Plane, Home, Archive, Plus } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts';
 import { AnimatedBalance } from './animated-balance';
-
-const expenseSchema = z.object({
-  amount: z.coerce.number().positive({ message: "Amount must be positive." }),
-  category: z.string().min(1, { message: "Category is required."}),
-  otherCategory: z.string().optional(),
-  date: z.date(),
-}).refine(data => {
-    if (data.category === 'Other' && !data.otherCategory) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Please specify the category name.",
-    path: ["otherCategory"],
-});
 
 const CategoryIcon = ({ category, className }: { category: string; className?: string }) => {
   const props = { className: cn("h-6 w-6", className) };
@@ -82,10 +66,10 @@ export function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [categories, setCategories] = useState<string[]>(['Food', 'Travel', 'Rent', 'Other']);
   const [dateFilter, setDateFilter] = useState('month');
   const [activePieIndex, setActivePieIndex] = useState<number | null>(null);
+  const [isSheetOpen, setSheetOpen] = useState(false);
 
   const fetchExpenses = useCallback((uid: string) => {
     setLoading(true);
@@ -181,7 +165,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
     return { total, categoryTotals, chartData };
   }, [filteredExpenses]);
 
-  const onAddExpense = async (values: z.infer<typeof expenseSchema>) => {
+  const onAddExpense = async (values: OnAddExpensePayload) => {
     if (!user) return;
     setIsSubmitting(true);
     
@@ -216,15 +200,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
   };
   
   return (
-    <Sheet>
-        <div className="fixed bottom-6 right-6 z-50">
-            <SheetTrigger asChild>
-                <Button className="h-16 w-16 rounded-full shadow-lg shadow-primary/40 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white active:scale-95 transition-transform">
-                    <Plus className="h-8 w-8" />
-                </Button>
-            </SheetTrigger>
-        </div>
-
+    <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
         <div className="space-y-6 pb-24">
         
         <Card className="bg-transparent border-none shadow-none">
@@ -369,7 +345,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
             </CardContent>
         </Card>
         </div>
-        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} />
+        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} setOpen={setSheetOpen} />
     </Sheet>
   );
 }

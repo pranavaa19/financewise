@@ -3,23 +3,19 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Loader2, Calendar as CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 import { SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
 
 const expenseSchema = z.object({
   amount: z.coerce.number().positive({ message: "Amount must be positive." }),
   category: z.string().min(1, { message: "Category is required."}),
   otherCategory: z.string().optional(),
-  date: z.date({ required_error: "Please select a date." }),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
 }).refine(data => {
     if (data.category === 'Other' && !data.otherCategory) {
         return false;
@@ -30,24 +26,43 @@ const expenseSchema = z.object({
     path: ["otherCategory"],
 });
 
+// A new type for form submission that converts the date string to a Date object
+export type ExpenseFormValues = z.infer<typeof expenseSchema>;
+export type OnAddExpensePayload = Omit<ExpenseFormValues, 'date'> & { date: Date };
+
+
 type AddExpenseSheetProps = {
     categories: string[];
-    onAddExpense: (values: z.infer<typeof expenseSchema>) => Promise<void>;
+    onAddExpense: (values: OnAddExpensePayload) => Promise<void>;
     isSubmitting: boolean;
+    setOpen: (open: boolean) => void;
 }
 
-export function AddExpenseSheet({ categories, onAddExpense, isSubmitting }: AddExpenseSheetProps) {
-  const form = useForm<z.infer<typeof expenseSchema>>({
+export function AddExpenseSheet({ categories, onAddExpense, isSubmitting, setOpen }: AddExpenseSheetProps) {
+  const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       amount: 0,
       category: 'Food',
-      date: new Date(),
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
       otherCategory: '',
     },
   });
 
   const selectedCategory = form.watch('category');
+
+  const handleFormSubmit = async (values: ExpenseFormValues) => {
+    // Convert date string to Date object before passing to parent
+    await onAddExpense({
+        ...values,
+        date: new Date(values.date)
+    });
+    // Close sheet on successful submission
+    if (!form.formState.isSubmitting) {
+        setOpen(false);
+        form.reset();
+    }
+  };
 
   return (
     <SheetContent side="bottom" className="rounded-t-3xl border-none bg-background/80 backdrop-blur-xl">
@@ -57,7 +72,7 @@ export function AddExpenseSheet({ categories, onAddExpense, isSubmitting }: AddE
       </SheetHeader>
       <div className="max-w-md mx-auto">
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onAddExpense)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
             <FormField control={form.control} name="amount" render={({ field }) => (
                 <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} className="py-6 text-lg"/></FormControl><FormMessage /></FormItem>
             )} />
@@ -75,43 +90,18 @@ export function AddExpenseSheet({ categories, onAddExpense, isSubmitting }: AddE
                     </FormItem>
                 )} />
             )}
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "pl-3 text-left font-normal text-lg py-6",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
+             <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Date</FormLabel>
+                        <FormControl>
+                            <Input type="date" {...field} className="py-6 text-lg" />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
             />
             <Button type="submit" disabled={isSubmitting} size="lg" className="w-full text-lg py-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white hover:opacity-90">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Expense
