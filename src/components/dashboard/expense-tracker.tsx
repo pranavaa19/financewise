@@ -16,11 +16,11 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Sheet } from '@/components/ui/sheet';
+import { Sheet, SheetTrigger } from '@/components/ui/sheet';
 import { AddExpenseSheet } from '@/components/dashboard/add-expense-sheet';
 import { useToast } from '@/hooks/use-toast';
 import { cn, formatIndianCurrency } from '@/lib/utils';
-import { Loader2, Trash2, Salad, Plane, Home, Archive } from 'lucide-react';
+import { Loader2, Trash2, Salad, Plane, Home, Archive, Plus } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts';
 import { AnimatedBalance } from './animated-balance';
 
@@ -217,6 +217,14 @@ const { total, categoryTotals, chartData } = useMemo(() => {
   
   return (
     <Sheet>
+        <div className="fixed bottom-6 right-6 z-50">
+            <SheetTrigger asChild>
+                <Button className="h-16 w-16 rounded-full shadow-lg shadow-primary/40 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white active:scale-95 transition-transform">
+                    <Plus className="h-8 w-8" />
+                </Button>
+            </SheetTrigger>
+        </div>
+
         <div className="space-y-6 pb-24">
         
         <Card className="bg-transparent border-none shadow-none">
