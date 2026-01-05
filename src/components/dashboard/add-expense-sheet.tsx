@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Timestamp } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -20,7 +19,7 @@ const expenseSchema = z.object({
   amount: z.coerce.number().positive({ message: "Amount must be positive." }),
   category: z.string().min(1, { message: "Category is required."}),
   otherCategory: z.string().optional(),
-  date: z.date(),
+  date: z.date({ required_error: "Please select a date." }),
 }).refine(data => {
     if (data.category === 'Other' && !data.otherCategory) {
         return false;
@@ -76,12 +75,45 @@ export function AddExpenseSheet({ categories, onAddExpense, isSubmitting }: AddE
                     </FormItem>
                 )} />
             )}
-            <FormField control={form.control} name="date" render={({ field }) => (
-                <FormItem className="flex flex-col"><FormLabel>Date</FormLabel><Popover><PopoverTrigger asChild><FormControl>
-                <Button variant="outline" className={cn("pl-3 text-left font-normal text-lg py-6", !field.value && "text-muted-foreground")}><>{field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}</><CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button>
-                </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
-            )} />
-            <Button type="submit" disabled={isSubmitting} size="lg" className="w-full text-lg py-7 rounded-full bg-accent hover:bg-accent/90">
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "pl-3 text-left font-normal text-lg py-6",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" disabled={isSubmitting} size="lg" className="w-full text-lg py-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white hover:opacity-90">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Expense
             </Button>
             </form>
