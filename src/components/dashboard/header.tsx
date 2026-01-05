@@ -1,7 +1,9 @@
 "use client"
 import Link from "next/link"
-import { CircleDollarSign } from "lucide-react"
+import { CircleDollarSign, Plus } from "lucide-react"
 import { UserNav } from "./user-nav"
+import { Button } from "../ui/button"
+import { SheetTrigger } from "../ui/sheet"
 
 export function Header() {
   return (
@@ -17,11 +19,15 @@ export function Header() {
       </nav>
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
         <div className="ml-auto flex items-center gap-4">
+           <SheetTrigger asChild>
+            <Button className="h-12 w-12 rounded-full shadow-lg shadow-primary/40 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white active:scale-95 transition-transform">
+                <Plus className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
           <UserNav />
         </div>
       </div>
     </header>
   )
 }
-
     

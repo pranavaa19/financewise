@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Header } from '@/components/dashboard/header';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { ExpenseTracker } from '@/components/dashboard/expense-tracker';
+import { AddExpenseSheet } from '@/components/dashboard/add-expense-sheet';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -14,3 +16,5 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </Sheet>
   );
 }
+
+    

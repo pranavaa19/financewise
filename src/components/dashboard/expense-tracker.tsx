@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { format, startOfMonth, endOfMonth, isValid } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isValid, subMonths } from 'date-fns';
 import { Timestamp, collection, onSnapshot, query, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
@@ -24,6 +24,7 @@ import { AnimatedBalance } from './animated-balance';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CategoryIcon = ({ category, className }: { category: string; className?: string }) => {
   const props = { className: cn("h-6 w-6", className) };
@@ -80,6 +81,19 @@ export function ExpenseTracker() {
   const [filterEndDate, setFilterEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
   const [manualDate, setManualDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
 
+  const monthOptions = useMemo(() => {
+    const options = [];
+    const today = new Date();
+    for (let i = 0; i < 12; i++) {
+        const date = subMonths(today, i);
+        options.push({
+            value: format(date, 'yyyy-MM'),
+            label: format(date, 'MMMM yyyy'),
+        });
+    }
+    return options;
+  }, []);
+
   const fetchExpenses = useCallback((uid: string) => {
     setLoading(true);
     const expensesColRef = collection(db, 'users', uid, 'expenses');
@@ -133,6 +147,13 @@ export function ExpenseTracker() {
         setFilterEndDate(endOfMonth(now));
     }
     // For 'week' and 'today', let the user pick dates.
+  };
+
+  const handleMonthSelect = (value: string) => {
+    const [year, month] = value.split('-').map(Number);
+    const selectedDate = new Date(year, month - 1, 1);
+    setFilterStartDate(startOfMonth(selectedDate));
+    setFilterEndDate(endOfMonth(selectedDate));
   };
 
   const handleDeleteExpense = async (expenseId: string) => {
@@ -270,26 +291,18 @@ const { total, categoryTotals, chartData } = useMemo(() => {
     }
     if (dateFilter === 'month') {
         return (
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        {filterStartDate ? format(filterStartDate, 'MMMM yyyy') : <span>Pick a month</span>}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        mode="single"
-                        onSelect={(date) => {
-                            if(date) {
-                                setFilterStartDate(startOfMonth(date));
-                                setFilterEndDate(endOfMonth(date));
-                            }
-                        }}
-                        initialFocus
-                        defaultMonth={filterStartDate}
-                    />
-                </PopoverContent>
-            </Popover>
+            <Select onValueChange={handleMonthSelect} defaultValue={format(filterStartDate || new Date(), 'yyyy-MM')}>
+                <SelectTrigger className="w-full justify-start text-left font-normal bg-card/80 border-white/10">
+                    <SelectValue placeholder="Select a month" />
+                </SelectTrigger>
+                <SelectContent>
+                    {monthOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         )
     }
     return null;
@@ -297,9 +310,6 @@ const { total, categoryTotals, chartData } = useMemo(() => {
   
   return (
     <>
-      <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} setOpen={setSheetOpen} />
-      </Sheet>
       <div className="space-y-6 pb-24">
         
         <Card className="bg-transparent border-none shadow-none">
@@ -451,5 +461,4 @@ const { total, categoryTotals, chartData } = useMemo(() => {
     </>
   );
 }
-
     
