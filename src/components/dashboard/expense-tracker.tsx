@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import * as z from 'zod';
-import { format, startOfMonth, startOfWeek, startOfDay, endOfDay, endOfWeek, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isValid } from 'date-fns';
 import { Timestamp, collection, onSnapshot, query, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
@@ -22,6 +21,9 @@ import { cn, formatIndianCurrency } from '@/lib/utils';
 import { Loader2, Trash2, Salad, Plane, Home, Archive, Plus } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts';
 import { AnimatedBalance } from './animated-balance';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
 
 const CategoryIcon = ({ category, className }: { category: string; className?: string }) => {
   const props = { className: cn("h-6 w-6", className) };
@@ -43,7 +45,7 @@ const ActiveShape = (props: any) => {
       <text x={cx} y={cy - 10} dy={8} textAnchor="middle" fill={fill} className="text-lg font-bold">
         {payload.name}
       </text>
-      <text x={cx} y={cy + 10} dy={8} textAnchor="middle" fill="#9CA3AF" className="text-sm">
+      <text x={cy} y={cy + 10} dy={8} textAnchor="middle" fill="#9CA3AF" className="text-sm">
         {formatIndianCurrency(value)}
       </text>
       <Sector
@@ -70,6 +72,10 @@ export function ExpenseTracker() {
   const [dateFilter, setDateFilter] = useState('month');
   const [activePieIndex, setActivePieIndex] = useState<number | null>(null);
   const [isSheetOpen, setSheetOpen] = useState(false);
+  
+  const [filterStartDate, setFilterStartDate] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [filterEndDate, setFilterEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
+  const [manualDate, setManualDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
 
   const fetchExpenses = useCallback((uid: string) => {
     setLoading(true);
@@ -92,7 +98,6 @@ export function ExpenseTracker() {
     return unsubscribe;
   }, [toast]);
   
-
   useEffect(() => {
     if (!user) return;
     const unsubscribe = fetchExpenses(user.uid);
@@ -116,7 +121,17 @@ export function ExpenseTracker() {
 
     return () => unsubscribe();
   }, [user]);
-  
+
+  const handleDateFilterChange = (value: string) => {
+    setDateFilter(value);
+    const now = new Date();
+    if (value === 'month') {
+        setFilterStartDate(startOfMonth(now));
+        setFilterEndDate(endOfMonth(now));
+    }
+    // For 'week' and 'today', let the user pick dates.
+  };
+
   const handleDeleteExpense = async (expenseId: string) => {
     if (!user) return;
     try {
@@ -128,41 +143,52 @@ export function ExpenseTracker() {
   };
 
   const filteredExpenses = useMemo(() => {
-    const now = new Date();
-    let start, end;
+    if (!filterStartDate || !filterEndDate) return [];
+    
+    let start = filterStartDate;
+    let end = new Date(filterEndDate.getTime());
+    end.setHours(23, 59, 59, 999);
+
     if (dateFilter === 'today') {
-        start = startOfDay(now);
-        end = endOfDay(now);
-    } else if (dateFilter === 'week') {
-        start = startOfWeek(now);
-        end = endOfWeek(now);
-    } else { // month
-        start = startOfMonth(now);
-        end = endOfMonth(now);
+        const manualDateObj = new Date(manualDate);
+        if (isValid(manualDateObj)) {
+            start = new Date(manualDateObj.getTime());
+            start.setHours(0, 0, 0, 0);
+            end = new Date(manualDateObj.getTime());
+            end.setHours(23, 59, 59, 999);
+        } else {
+            return [];
+        }
     }
+
     return expenses.filter(e => {
         const expenseDate = e.date.toDate();
         return expenseDate >= start && expenseDate <= end;
     });
-  }, [expenses, dateFilter]);
+  }, [expenses, dateFilter, filterStartDate, filterEndDate, manualDate]);
+
 
 const { total, categoryTotals, chartData } = useMemo(() => {
     const categoryTotalsMap: Map<string, number> = new Map();
-    let total = 0;
+    let currentTotal = 0;
     
     filteredExpenses.forEach(expense => {
-      total += expense.amount;
-      const currentTotal = categoryTotalsMap.get(expense.category) || 0;
-      categoryTotalsMap.set(expense.category, currentTotal + expense.amount);
+      currentTotal += expense.amount;
+      const currentCategoryTotal = categoryTotalsMap.get(expense.category) || 0;
+      categoryTotalsMap.set(expense.category, currentCategoryTotal + expense.amount);
     });
   
-    const categoryTotals: CategoryTotal[] = Array.from(categoryTotalsMap.entries()).map(([category, total]) => ({ category, total }));
+    const categoryTotals: CategoryTotal[] = Array.from(categoryTotalsMap.entries()).map(([category, total]) => ({ 
+        category, 
+        total,
+        percentage: currentTotal > 0 ? (total / currentTotal) * 100 : 0
+    }));
     
     const chartData = categoryTotals
         .filter(item => item.total > 0)
         .map(item => ({ name: item.category, value: item.total }));
   
-    return { total, categoryTotals, chartData };
+    return { total: currentTotal, categoryTotals, chartData };
   }, [filteredExpenses]);
 
   const onAddExpense = async (values: OnAddExpensePayload) => {
@@ -199,6 +225,72 @@ const { total, categoryTotals, chartData } = useMemo(() => {
   const onPieLeave = () => {
     setActivePieIndex(null);
   };
+
+  const renderFilterInputs = () => {
+    if (dateFilter === 'today') {
+        return (
+            <Input 
+                type="text" 
+                value={manualDate} 
+                onChange={(e) => setManualDate(e.target.value)} 
+                placeholder="YYYY-MM-DD"
+                className="bg-card/80 border-white/10"
+            />
+        );
+    }
+    if (dateFilter === 'week') {
+        return (
+            <div className="flex items-center gap-2">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            {filterStartDate ? format(filterStartDate, 'LLL dd, y') : <span>Pick a start date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={filterStartDate} onSelect={setFilterStartDate} initialFocus />
+                    </PopoverContent>
+                </Popover>
+                <span>to</span>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            {filterEndDate ? format(filterEndDate, 'LLL dd, y') : <span>Pick an end date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={filterEndDate} onSelect={setFilterEndDate} initialFocus />
+                    </PopoverContent>
+                </Popover>
+            </div>
+        );
+    }
+    if (dateFilter === 'month') {
+        return (
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        {filterStartDate ? format(filterStartDate, 'MMMM yyyy') : <span>Pick a month</span>}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        onSelect={(date) => {
+                            if(date) {
+                                setFilterStartDate(startOfMonth(date));
+                                setFilterEndDate(endOfMonth(date));
+                            }
+                        }}
+                        initialFocus
+                        defaultMonth={filterStartDate}
+                    />
+                </PopoverContent>
+            </Popover>
+        )
+    }
+    return null;
+  }
   
   return (
     <>
@@ -218,24 +310,28 @@ const { total, categoryTotals, chartData } = useMemo(() => {
                 <Card className="bg-card/60 backdrop-blur-xl border-white/10">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Category Totals</CardTitle>
-                        <ToggleGroup type="single" defaultValue="month" value={dateFilter} onValueChange={(value) => value && setDateFilter(value)} aria-label="Date filter">
+                        <ToggleGroup type="single" defaultValue="month" value={dateFilter} onValueChange={(value) => value && handleDateFilterChange(value)} aria-label="Date filter">
                             <ToggleGroupItem value="today" aria-label="Today">Today</ToggleGroupItem>
                             <ToggleGroupItem value="week" aria-label="This week">Week</ToggleGroupItem>
                             <ToggleGroupItem value="month" aria-label="This month">Month</ToggleGroupItem>
                         </ToggleGroup>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <div className="mb-4">{renderFilterInputs()}</div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {categoryTotals.map(({ category, total }) => (
+                        {categoryTotals.map(({ category, total: categoryTotal, percentage }) => (
                         <Card key={category} className="bg-secondary/50 border-white/10">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{category}</CardTitle>
-                            <CategoryIcon category={category} className="h-4 w-4 text-muted-foreground" />
+                                <CardTitle className="text-sm font-medium">{category}</CardTitle>
+                                <CategoryIcon category={category} className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                            <div className="text-xl font-bold">
-                                {loading ? <Loader2 className="h-5 w-5 animate-spin"/> : formatIndianCurrency(total)}
-                            </div>
+                                <div className="text-xl font-bold">
+                                    {loading ? <Loader2 className="h-5 w-5 animate-spin"/> : formatIndianCurrency(categoryTotal)}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {percentage?.toFixed(1)}% of total
+                                </p>
                             </CardContent>
                         </Card>
                         ))}
@@ -346,7 +442,16 @@ const { total, categoryTotals, chartData } = useMemo(() => {
             </CardContent>
         </Card>
       </div>
-      <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} setOpen={setSheetOpen} />
+      <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+        <SheetTrigger asChild>
+            <Button className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg shadow-primary/40 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white active:scale-95 transition-transform z-50">
+                <Plus className="h-8 w-8" />
+            </Button>
+        </SheetTrigger>
+        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} setOpen={setSheetOpen} />
+      </Sheet>
     </>
   );
 }
+
+    

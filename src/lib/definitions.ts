@@ -22,6 +22,7 @@ export type Expense = {
 export type CategoryTotal = {
   category: ExpenseCategory;
   total: number;
+  percentage?: number;
 };
 
     
