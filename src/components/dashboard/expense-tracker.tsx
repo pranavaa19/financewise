@@ -200,7 +200,142 @@ const { total, categoryTotals, chartData } = useMemo(() => {
 
   return (
     <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Add Expense</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onAddExpense)} className="space-y-4">
+                  <FormField control={form.control} name="amount" render={({ field }) => (
+                    <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="category" render={({ field }) => (
+                    <FormItem><FormLabel>Category</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                  )} />
+                  {selectedCategory === 'Other' && (
+                    <FormField control={form.control} name="otherCategory" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Custom Category Name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., Subscriptions" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                  )}
+                  <FormField control={form.control} name="date" render={({ field }) => (
+                    <FormItem className="flex flex-col"><FormLabel>Date</FormLabel><Popover><PopoverTrigger asChild><FormControl>
+                      <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}><>{format(field.value, 'PPP')}</><CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button>
+                    </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
+                  )} />
+                  <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+                    {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Expense
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Totals</CardTitle>
+                   <Input
+                      type="month"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="w-[180px]"
+                      />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <Card className="bg-accent/10 text-accent-foreground">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-accent-foreground/80">Total for {format(new Date(selectedMonth + '-02'), 'MMMM yyyy')}</CardTitle>
+                      <CircleDollarSign className="h-4 w-4 text-accent" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {loading ? <Loader2 className="h-6 w-6 animate-spin"/> : formatIndianCurrency(total)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {categoryTotals.map(({ category, total }) => (
+                    <Card key={category}>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{category}</CardTitle>
+                        <CategoryIcon category={category} className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-lg font-bold">
+                          {loading ? <Loader2 className="h-5 w-5 animate-spin"/> : formatIndianCurrency(total)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  </div>
+              </CardContent>
+          </Card>
+        </div>
+      </div>
       <div className="grid gap-6 md:grid-cols-2">
+         <Card>
+              <CardHeader>
+                  <CardTitle>Expense List for {format(new Date(selectedMonth + '-02'), 'MMMM yyyy')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <div className="relative">
+                      {loading && <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10"><Loader2 className="h-8 w-8 animate-spin" /></div>}
+                      <div className="max-h-[400px] overflow-auto">
+                          <Table>
+                              <TableHeader className="sticky top-0 bg-background">
+                                  <TableRow>
+                                      <TableHead>Amount</TableHead>
+                                      <TableHead>Category</TableHead>
+                                      <TableHead>Date</TableHead>
+                                      <TableHead className="text-right">Actions</TableHead>
+                                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                  {expenses.length > 0 ? (
+                                      expenses.map(e => (
+                                          <TableRow key={e.id} className="animate-enter">
+                                              <TableCell className="font-medium">{formatIndianCurrency(e.amount)}</TableCell>
+                                              <TableCell>
+                                                  <div className="flex items-center gap-2">
+                                                      <CategoryIcon category={e.category} className="h-4 w-4"/>
+                                                      {e.category}
+                                                  </div>
+                                              </TableCell>
+                                              <TableCell>{format(e.date.toDate(), 'MMM d, yyyy')}</TableCell>
+                                              <TableCell className="text-right">
+                                                  <AlertDialog>
+                                                      <AlertDialogTrigger asChild>
+                                                          <Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                                      </AlertDialogTrigger>
+                                                      <AlertDialogContent>
+                                                          <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete this expense.</AlertDialogDescription></AlertDialogHeader>
+                                                          <AlertDialogFooter>
+                                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                              <AlertDialogAction onClick={() => handleDeleteExpense(e.id)} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
+                                                          </AlertDialogFooter>
+                                                      </AlertDialogContent>
+                                                  </AlertDialog>
+                                              </TableCell>
+                                          </TableRow>
+                                      ))
+                                  ) : (
+                                      <TableRow><TableCell colSpan={4} className="text-center h-24">{!loading && 'No expenses for this month.'}</TableCell></TableRow>
+                                  )}
+                              </TableBody>
+                          </Table>
+                      </div>
+                  </div>
+              </CardContent>
+          </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Analytics</CardTitle>
@@ -253,147 +388,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
             )}
           </CardContent>
         </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Totals</CardTitle>
-                 <Input
-                    type="month"
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="w-[180px]"
-                    />
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <Card className="bg-accent/10 text-accent-foreground">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-accent-foreground/80">Total for {format(new Date(selectedMonth + '-02'), 'MMMM yyyy')}</CardTitle>
-                    <CircleDollarSign className="h-4 w-4 text-accent" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {loading ? <Loader2 className="h-6 w-6 animate-spin"/> : formatIndianCurrency(total)}
-                    </div>
-                  </CardContent>
-                </Card>
-                <div className="grid grid-cols-2 gap-4">
-                {categoryTotals.map(({ category, total }) => (
-                  <Card key={category}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">{category}</CardTitle>
-                      <CategoryIcon category={category} className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-lg font-bold">
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin"/> : formatIndianCurrency(total)}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                </div>
-            </CardContent>
-        </Card>
-      </div>
-
-
-      <div className="grid gap-6 md:grid-cols-12">
-        <div className="md:col-span-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Expense</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onAddExpense)} className="space-y-4">
-                  <FormField control={form.control} name="amount" render={({ field }) => (
-                    <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" step="0.01" placeholder="₹0.00" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="category" render={({ field }) => (
-                    <FormItem><FormLabel>Category</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
-                  )} />
-                  {selectedCategory === 'Other' && (
-                    <FormField control={form.control} name="otherCategory" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Custom Category Name</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., Subscriptions" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
-                  )}
-                  <FormField control={form.control} name="date" render={({ field }) => (
-                    <FormItem className="flex flex-col"><FormLabel>Date</FormLabel><Popover><PopoverTrigger asChild><FormControl>
-                      <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}><>{format(field.value, 'PPP')}</><CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button>
-                    </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
-                  )} />
-                  <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-                    {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Expense
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="md:col-span-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Expense List for {format(new Date(selectedMonth + '-02'), 'MMMM yyyy')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="relative">
-                        {loading && <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10"><Loader2 className="h-8 w-8 animate-spin" /></div>}
-                        <div className="max-h-[400px] overflow-auto">
-                            <Table>
-                                <TableHeader className="sticky top-0 bg-background">
-                                    <TableRow>
-                                        <TableHead>Amount</TableHead>
-                                        <TableHead>Category</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {expenses.length > 0 ? (
-                                        expenses.map(e => (
-                                            <TableRow key={e.id} className="animate-enter">
-                                                <TableCell className="font-medium">{formatIndianCurrency(e.amount)}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <CategoryIcon category={e.category} className="h-4 w-4"/>
-                                                        {e.category}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>{format(e.date.toDate(), 'MMM d, yyyy')}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete this expense.</AlertDialogDescription></AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleDeleteExpense(e.id)} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow><TableCell colSpan={4} className="text-center h-24">{!loading && 'No expenses for this month.'}</TableCell></TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
       </div>
     </div>
   );
 }
-
-    
