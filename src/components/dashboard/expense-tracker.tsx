@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import * as z from 'zod';
 import { format, startOfMonth, startOfWeek, startOfDay, endOfDay, endOfWeek, endOfMonth } from 'date-fns';
-import { Timestamp, collection, onSnapshot, query, addDoc, where, getDocs, deleteDoc, orderBy } from 'firebase/firestore';
+import { Timestamp, collection, onSnapshot, query, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
 import { addExpense, getExpenses, deleteExpense, addCategory } from '@/lib/firebase/firestore';
@@ -184,6 +184,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
         date: Timestamp.fromDate(values.date),
       });
       toast({ title: 'Success', description: 'Expense added.' });
+      setSheetOpen(false);
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to add expense.' });
     } finally {
@@ -200,8 +201,8 @@ const { total, categoryTotals, chartData } = useMemo(() => {
   };
   
   return (
-    <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-        <div className="space-y-6 pb-24">
+    <>
+      <div className="space-y-6 pb-24">
         
         <Card className="bg-transparent border-none shadow-none">
             <CardHeader>
@@ -344,8 +345,8 @@ const { total, categoryTotals, chartData } = useMemo(() => {
             )}
             </CardContent>
         </Card>
-        </div>
-        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} setOpen={setSheetOpen} />
-    </Sheet>
+      </div>
+      <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} setOpen={setSheetOpen} />
+    </>
   );
 }
