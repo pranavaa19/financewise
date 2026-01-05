@@ -16,12 +16,12 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Sheet, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet } from '@/components/ui/sheet';
 import { AddExpenseSheet } from '@/components/dashboard/add-expense-sheet';
 import { useToast } from '@/hooks/use-toast';
 import { cn, formatIndianCurrency } from '@/lib/utils';
-import { Loader2, Trash2, Salad, Plane, Home, Archive, Plus } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Sector } from 'recharts';
+import { Loader2, Trash2, Salad, Plane, Home, Archive } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts';
 import { AnimatedBalance } from './animated-balance';
 
 const expenseSchema = z.object({
@@ -216,157 +216,152 @@ const { total, categoryTotals, chartData } = useMemo(() => {
   };
   
   return (
-    <div className="space-y-6 pb-24">
-      <Sheet>
-        <SheetTrigger asChild>
-            <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg shadow-primary/40 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white active:scale-95 transition-transform">
-                <Plus className="h-8 w-8" />
-            </Button>
-        </SheetTrigger>
-        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} />
-      </Sheet>
-      
-      <Card className="bg-transparent border-none shadow-none">
-          <CardHeader>
-          <CardTitle className="text-lg font-medium text-muted-foreground">Total Balance</CardTitle>
-          <CardDescription className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-              <AnimatedBalance value={total} />
-          </CardDescription>
-          </CardHeader>
-      </Card>
+    <Sheet>
+        <div className="space-y-6 pb-24">
+        
+        <Card className="bg-transparent border-none shadow-none">
+            <CardHeader>
+            <CardTitle className="text-lg font-medium text-muted-foreground">Total Balance</CardTitle>
+            <CardDescription className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
+                <AnimatedBalance value={total} />
+            </CardDescription>
+            </CardHeader>
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-             <Card className="bg-card/60 backdrop-blur-xl border-white/10">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Category Totals</CardTitle>
-                    <ToggleGroup type="single" defaultValue="month" value={dateFilter} onValueChange={(value) => value && setDateFilter(value)} aria-label="Date filter">
-                        <ToggleGroupItem value="today" aria-label="Today">Today</ToggleGroupItem>
-                        <ToggleGroupItem value="week" aria-label="This week">Week</ToggleGroupItem>
-                        <ToggleGroupItem value="month" aria-label="This month">Month</ToggleGroupItem>
-                    </ToggleGroup>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     {categoryTotals.map(({ category, total }) => (
-                       <Card key={category} className="bg-secondary/50 border-white/10">
-                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                           <CardTitle className="text-sm font-medium">{category}</CardTitle>
-                           <CategoryIcon category={category} className="h-4 w-4 text-muted-foreground" />
-                         </CardHeader>
-                         <CardContent>
-                           <div className="text-xl font-bold">
-                             {loading ? <Loader2 className="h-5 w-5 animate-spin"/> : formatIndianCurrency(total)}
-                           </div>
-                         </CardContent>
-                       </Card>
-                     ))}
-                     </div>
-                </CardContent>
-            </Card>
-        </div>
-
-        <div className="lg:col-span-3">
-             <Card className="bg-card/60 backdrop-blur-xl border-white/10">
-                <CardHeader>
-                    <CardTitle>Recent Expenses</CardTitle>
-                    <CardDescription>Your latest transactions for the selected period.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="relative">
-                        {loading && <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10"><Loader2 className="h-8 w-8 animate-spin" /></div>}
-                        <div className="max-h-[400px] overflow-auto">
-                            <Table>
-                                <TableHeader className="sticky top-0 bg-card/80 backdrop-blur-xl">
-                                    <TableRow>
-                                        <TableHead>Amount</TableHead>
-                                        <TableHead>Category</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredExpenses.length > 0 ? (
-                                        filteredExpenses.map((e, index) => (
-                                            <TableRow key={e.id} className="animate-slide-in-stagger" style={{ '--stagger-delay': `${index * 50}ms` } as React.CSSProperties}>
-                                                <TableCell className="font-medium">{formatIndianCurrency(e.amount)}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <CategoryIcon category={e.category} className="h-4 w-4"/>
-                                                        {e.category}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>{format(e.date.toDate(), 'MMM d, yyyy')}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/20 active:scale-95 transition-transform"><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this expense.</AlertDialogDescription></AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleDeleteExpense(e.id)} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow><TableCell colSpan={4} className="text-center h-24">{!loading && 'No expenses for this period.'}</TableCell></TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+                <Card className="bg-card/60 backdrop-blur-xl border-white/10">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Category Totals</CardTitle>
+                        <ToggleGroup type="single" defaultValue="month" value={dateFilter} onValueChange={(value) => value && setDateFilter(value)} aria-label="Date filter">
+                            <ToggleGroupItem value="today" aria-label="Today">Today</ToggleGroupItem>
+                            <ToggleGroupItem value="week" aria-label="This week">Week</ToggleGroupItem>
+                            <ToggleGroupItem value="month" aria-label="This month">Month</ToggleGroupItem>
+                        </ToggleGroup>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {categoryTotals.map(({ category, total }) => (
+                        <Card key={category} className="bg-secondary/50 border-white/10">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{category}</CardTitle>
+                            <CategoryIcon category={category} className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                            <div className="text-xl font-bold">
+                                {loading ? <Loader2 className="h-5 w-5 animate-spin"/> : formatIndianCurrency(total)}
+                            </div>
+                            </CardContent>
+                        </Card>
+                        ))}
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="lg:col-span-3">
+                <Card className="bg-card/60 backdrop-blur-xl border-white/10">
+                    <CardHeader>
+                        <CardTitle>Recent Expenses</CardTitle>
+                        <CardDescription>Your latest transactions for the selected period.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="relative">
+                            {loading && <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10"><Loader2 className="h-8 w-8 animate-spin" /></div>}
+                            <div className="max-h-[400px] overflow-auto">
+                                <Table>
+                                    <TableHeader className="sticky top-0 bg-card/80 backdrop-blur-xl">
+                                        <TableRow>
+                                            <TableHead>Amount</TableHead>
+                                            <TableHead>Category</TableHead>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredExpenses.length > 0 ? (
+                                            filteredExpenses.map((e, index) => (
+                                                <TableRow key={e.id} className="animate-slide-in-stagger" style={{ '--stagger-delay': `${index * 50}ms` } as React.CSSProperties}>
+                                                    <TableCell className="font-medium">{formatIndianCurrency(e.amount)}</TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
+                                                            <CategoryIcon category={e.category} className="h-4 w-4"/>
+                                                            {e.category}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>{format(e.date.toDate(), 'MMM d, yyyy')}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/20 active:scale-95 transition-transform"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this expense.</AlertDialogDescription></AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => handleDeleteExpense(e.id)} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow><TableCell colSpan={4} className="text-center h-24">{!loading && 'No expenses for this period.'}</TableCell></TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-      </div>
-      
-      <Card className="bg-card/60 backdrop-blur-xl border-white/10">
-        <CardHeader>
-          <CardTitle>Spending Breakdown</CardTitle>
-          <CardDescription>Your expense distribution by category.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-              <div className="flex justify-center items-center h-72">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-          ) : chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                      <Pie
-                          data={chartData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={80}
-                          outerRadius={110}
-                          fill="#8884d8"
-                          paddingAngle={5}
-                          dataKey="value"
-                          nameKey="name"
-                          activeIndex={activePieIndex ?? undefined}
-                          activeShape={ActiveShape}
-                          onMouseEnter={onPieEnter}
-                          onMouseLeave={onPieLeave}
-                      >
-                          {chartData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="stroke-none focus:outline-none" />
-                          ))}
-                      </Pie>
-                      <Tooltip />
-                  </PieChart>
-              </ResponsiveContainer>
-          ) : (
-              <div className="flex justify-center items-center h-72">
-                  <p className="text-muted-foreground">No expense data for this period.</p>
-              </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        
+        <Card className="bg-card/60 backdrop-blur-xl border-white/10">
+            <CardHeader>
+            <CardTitle>Spending Breakdown</CardTitle>
+            <CardDescription>Your expense distribution by category.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            {loading ? (
+                <div className="flex justify-center items-center h-72">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+            ) : chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                        <Pie
+                            data={chartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={80}
+                            outerRadius={110}
+                            fill="#8884d8"
+                            paddingAngle={5}
+                            dataKey="value"
+                            nameKey="name"
+                            activeIndex={activePieIndex ?? undefined}
+                            activeShape={ActiveShape}
+                            onMouseEnter={onPieEnter}
+                            onMouseLeave={onPieLeave}
+                        >
+                            {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="stroke-none focus:outline-none" />
+                            ))}
+                        </Pie>
+                        <Tooltip />
+                    </PieChart>
+                </ResponsiveContainer>
+            ) : (
+                <div className="flex justify-center items-center h-72">
+                    <p className="text-muted-foreground">No expense data for this period.</p>
+                </div>
+            )}
+            </CardContent>
+        </Card>
+        </div>
+        <AddExpenseSheet categories={categories} onAddExpense={onAddExpense} isSubmitting={isSubmitting} />
+    </Sheet>
   );
 }
