@@ -7,7 +7,7 @@ import { AddExpenseSheet } from '@/components/dashboard/add-expense-sheet';
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <Sheet>
-      <div className="flex min-h-screen w-full flex-col bg-muted/40">
+      <div className="flex min-h-screen w-full flex-col bg-background">
         <Header />
         <main className="flex flex-1 flex-col gap-4 p-4 sm:px-8 sm:py-6 md:gap-8">
           {children}

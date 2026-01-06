@@ -7,7 +7,7 @@ import { SheetTrigger } from "../ui/sheet"
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 flex h-20 items-center gap-4 border-b border-white/10 bg-background/60 px-4 backdrop-blur-xl md:px-8">
+    <header className="sticky top-0 z-40 flex h-20 items-center gap-4 border-b bg-background px-4 md:px-8">
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
         <Link
           href="/dashboard"

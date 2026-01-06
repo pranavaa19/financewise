@@ -14,8 +14,6 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Sheet, SheetTrigger } from '@/components/ui/sheet';
-import { AddExpenseSheet, type OnAddExpensePayload } from '@/components/dashboard/add-expense-sheet';
 import { useToast } from '@/hooks/use-toast';
 import { cn, formatIndianCurrency } from '@/lib/utils';
 import { Loader2, Trash2, Salad, Plane, Home, Archive, Plus } from 'lucide-react';
@@ -258,7 +256,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
                 value={manualDate} 
                 onChange={(e) => setManualDate(e.target.value)} 
                 placeholder="YYYY-MM-DD"
-                className="bg-card/80 border-white/10"
+                className="bg-background border-input"
             />
         );
     }
@@ -292,7 +290,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
     if (dateFilter === 'month') {
         return (
             <Select onValueChange={handleMonthSelect} defaultValue={format(filterStartDate || new Date(), 'yyyy-MM')}>
-                <SelectTrigger className="w-full justify-start text-left font-normal bg-card/80 border-white/10">
+                <SelectTrigger className="w-full justify-start text-left font-normal bg-background border-input">
                     <SelectValue placeholder="Select a month" />
                 </SelectTrigger>
                 <SelectContent>
@@ -323,7 +321,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div className="lg:col-span-2 space-y-6">
-                <Card className="bg-card/60 backdrop-blur-xl border-white/10">
+                <Card className="shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Category Totals</CardTitle>
                         <ToggleGroup type="single" defaultValue="month" value={dateFilter} onValueChange={(value) => value && handleDateFilterChange(value)} aria-label="Date filter">
@@ -336,7 +334,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
                         <div className="mb-4">{renderFilterInputs()}</div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {categoryTotals.map(({ category, total: categoryTotal, percentage }) => (
-                        <Card key={category} className="bg-secondary/50 border-white/10">
+                        <Card key={category} className="shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">{category}</CardTitle>
                                 <CategoryIcon category={category} className="h-4 w-4 text-muted-foreground" />
@@ -357,7 +355,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
             </div>
 
             <div className="lg:col-span-3">
-                <Card className="bg-card/60 backdrop-blur-xl border-white/10">
+                <Card>
                     <CardHeader>
                         <CardTitle>Recent Expenses</CardTitle>
                         <CardDescription>Your latest transactions for the selected period.</CardDescription>
@@ -367,7 +365,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
                             {loading && <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10"><Loader2 className="h-8 w-8 animate-spin" /></div>}
                             <div className="max-h-[400px] overflow-auto">
                                 <Table>
-                                    <TableHeader className="sticky top-0 bg-card/80 backdrop-blur-xl">
+                                    <TableHeader className="sticky top-0 bg-card">
                                         <TableRow>
                                             <TableHead>Amount</TableHead>
                                             <TableHead>Category</TableHead>
@@ -415,7 +413,7 @@ const { total, categoryTotals, chartData } = useMemo(() => {
             </div>
         </div>
         
-        <Card className="bg-card/60 backdrop-blur-xl border-white/10">
+        <Card>
             <CardHeader>
             <CardTitle>Spending Breakdown</CardTitle>
             <CardDescription>Your expense distribution by category.</CardDescription>
